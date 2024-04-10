@@ -94,6 +94,7 @@ type Header struct {
 	ExcessBlobGas *uint64 `json:"excessBlobGas" rlp:"optional"`
 
 	// ParentBeaconRoot was added by EIP-4788 and is ignored in legacy headers.
+	// EL Block Header에 ParentBeaconRoot 필드 추가
 	ParentBeaconRoot *common.Hash `json:"parentBeaconBlockRoot" rlp:"optional"`
 }
 

@@ -28,12 +28,12 @@ const (
 	MaxGasLimit          uint64 = 0x7fffffffffffffff // Maximum the gas limit (2^63-1).
 	GenesisGasLimit      uint64 = 4712388            // Gas limit of the Genesis block.
 
-	MaximumExtraDataSize  uint64 = 32    // Maximum size extra data may be after Genesis.
-	ExpByteGas            uint64 = 10    // Times ceil(log256(exponent)) for the EXP instruction.
-	SloadGas              uint64 = 50    // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
-	CallValueTransferGas  uint64 = 9000  // Paid for CALL when the value transfer is non-zero.
-	CallNewAccountGas     uint64 = 25000 // Paid for CALL when the destination address didn't exist prior.
-	TxGas                 uint64 = 21000 // Per transaction not creating a contract. NOTE: Not payable on data of calls between transactions.
+	MaximumExtraDataSize uint64 = 32    // Maximum size extra data may be after Genesis.
+	ExpByteGas           uint64 = 10    // Times ceil(log256(exponent)) for the EXP instruction.
+	SloadGas             uint64 = 50    // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
+	CallValueTransferGas uint64 = 9000  // Paid for CALL when the value transfer is non-zero.
+	CallNewAccountGas    uint64 = 25000 // Paid for CALL when the destination address didn't exist prior.
+	TxGas                uint64 = 21000 // Per transaction not creating a contract. NOTE: Not payable on data of calls between transactions.
 	//eip2: 추가된 가스비 코드
 	TxGasContractCreation uint64 = 53000 // Per transaction that creates a contract. NOTE: Not payable on data of calls between transactions.
 	TxDataZeroGas         uint64 = 4     // Per byte of data attached to a transaction that equals zero. NOTE: Not payable on data of calls between transactions.
@@ -197,6 +197,7 @@ var (
 	DurationLimit          = big.NewInt(13)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
 
 	// BeaconRootsAddress is the address where historical beacon roots are stored as per EIP-4788
+	// BeaconRoots를 저장할 SmartContract 주소
 	BeaconRootsAddress = common.HexToAddress("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02")
 	// SystemAddress is where the system-transaction is sent from as per EIP-4788
 	SystemAddress = common.HexToAddress("0xfffffffffffffffffffffffffffffffffffffffe")
