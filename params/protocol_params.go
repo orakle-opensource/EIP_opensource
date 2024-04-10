@@ -200,5 +200,6 @@ var (
 	// BeaconRoots를 저장할 SmartContract 주소
 	BeaconRootsAddress = common.HexToAddress("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02")
 	// SystemAddress is where the system-transaction is sent from as per EIP-4788
+	// ParentBeaconRoot를 SmartContract에 저장할 때 사용되는 from 주소
 	SystemAddress = common.HexToAddress("0xfffffffffffffffffffffffffffffffffffffffe")
 )
