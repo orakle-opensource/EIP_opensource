@@ -218,12 +218,14 @@ const (
 	DELEGATECALL OpCode = 0xf4
 	CREATE2      OpCode = 0xf5
 
-	STATICCALL   OpCode = 0xfa
+	STATICCALL OpCode = 0xfa
+	// REVERT instruction 은 OpCode 값으로 `0xfd` 를 가짐
 	REVERT       OpCode = 0xfd
 	INVALID      OpCode = 0xfe
 	SELFDESTRUCT OpCode = 0xff
 )
 
+// opCode 를 string 으로 변환하는 table
 var opCodeToString = [256]string{
 	// 0x0 range - arithmetic ops.
 	STOP:       "STOP",
@@ -404,6 +406,7 @@ func (op OpCode) String() string {
 	return fmt.Sprintf("opcode %#x not defined", int(op))
 }
 
+// string 으로 표현된 opcode 를 다시 opcode로 변환하는 table
 var stringToOp = map[string]OpCode{
 	"STOP":           STOP,
 	"ADD":            ADD,

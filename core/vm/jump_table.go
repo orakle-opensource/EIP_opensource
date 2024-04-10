@@ -177,6 +177,7 @@ func newConstantinopleInstructionSet() JumpTable {
 	return validate(instructionSet)
 }
 
+// Byzantium hard fork 때 추가된 OpCode 명령어 모음입니다.
 // newByzantiumInstructionSet returns the frontier, homestead and
 // byzantium instructions.
 func newByzantiumInstructionSet() JumpTable {
@@ -203,9 +204,11 @@ func newByzantiumInstructionSet() JumpTable {
 		maxStack:    maxStack(3, 0),
 		memorySize:  memoryReturnDataCopy,
 	}
+	// REVERT instruction 에 대한 정보입니다.
 	instructionSet[REVERT] = &operation{
 		execute:    opRevert,
 		dynamicGas: gasRevert,
+		// 두 번의 `pop` 을 함을 명시합니다.
 		minStack:   minStack(2, 0),
 		maxStack:   maxStack(2, 0),
 		memorySize: memoryRevert,
