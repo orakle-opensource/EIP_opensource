@@ -45,6 +45,7 @@ type VerkleTrie struct {
 }
 
 // NewVerkleTrie constructs a verkle tree based on the specified root hash.
+// root에 대한 Verkle Trie 복원(생성)
 func NewVerkleTrie(root common.Hash, db database.Database, cache *utils.PointCache) (*VerkleTrie, error) {
 	reader, err := newTrieReader(root, common.Hash{}, db)
 	if err != nil {
@@ -86,6 +87,8 @@ func (t *VerkleTrie) GetAccount(addr common.Address) (*types.StateAccount, error
 	)
 	switch n := t.root.(type) {
 	case *verkle.InternalNode:
+		// internal node인 경우, 해당 address에 대한 stem을 가져온다. (key)
+		// stem(key)에 대한 Value를 가져온다.
 		values, err = n.GetValuesAtStem(t.cache.GetStem(addr[:]), t.nodeResolver)
 		if err != nil {
 			return nil, fmt.Errorf("GetAccount (%x) error: %v", addr, err)
@@ -97,10 +100,12 @@ func (t *VerkleTrie) GetAccount(addr common.Address) (*types.StateAccount, error
 		return nil, nil
 	}
 	// Decode nonce in little-endian
+	// nonce를 가져옴
 	if len(values[utils.NonceLeafKey]) > 0 {
 		acc.Nonce = binary.LittleEndian.Uint64(values[utils.NonceLeafKey])
 	}
 	// Decode balance in little-endian
+	// balance를 가져옴
 	var balance [32]byte
 	copy(balance[:], values[utils.BalanceLeafKey])
 	for i := 0; i < len(balance)/2; i++ {
@@ -109,6 +114,7 @@ func (t *VerkleTrie) GetAccount(addr common.Address) (*types.StateAccount, error
 	acc.Balance = new(uint256.Int).SetBytes32(balance[:])
 
 	// Decode codehash
+	// codeHash를 가져옴
 	acc.CodeHash = values[utils.CodeKeccakLeafKey]
 
 	// TODO account.Root is leave as empty. How should we handle the legacy account?
@@ -118,6 +124,7 @@ func (t *VerkleTrie) GetAccount(addr common.Address) (*types.StateAccount, error
 // GetStorage implements state.Trie, retrieving the storage slot with the specified
 // account address and storage key. If the specified slot is not in the verkle tree,
 // nil will be returned. If the tree is corrupted, an error will be returned.
+// 해당 address에 대한 stroage 데이터를 복원합니다.
 func (t *VerkleTrie) GetStorage(addr common.Address, key []byte) ([]byte, error) {
 	k := utils.StorageSlotKeyWithEvaluatedAddress(t.cache.Get(addr.Bytes()), key)
 	val, err := t.root.Get(k, t.nodeResolver)
@@ -129,17 +136,19 @@ func (t *VerkleTrie) GetStorage(addr common.Address, key []byte) ([]byte, error)
 
 // UpdateAccount implements state.Trie, writing the provided account into the tree.
 // If the tree is corrupted, an error will be returned.
+// 새로운 Account를 등록합니다.
 func (t *VerkleTrie) UpdateAccount(addr common.Address, acc *types.StateAccount) error {
 	var (
 		err            error
 		nonce, balance [32]byte
 		values         = make([][]byte, verkle.NodeWidth)
 	)
+	// value setting
 	values[utils.VersionLeafKey] = zero[:]
 	values[utils.CodeKeccakLeafKey] = acc.CodeHash[:]
 
 	// Encode nonce in little-endian
-	binary.LittleEndian.PutUint64(nonce[:], acc.Nonce)
+	binary.LittleEndian.PutUint64(nonce[:], acc.Nonce) // nonce 기록
 	values[utils.NonceLeafKey] = nonce[:]
 
 	// Encode balance in little-endian
@@ -149,10 +158,16 @@ func (t *VerkleTrie) UpdateAccount(addr common.Address, acc *types.StateAccount)
 			balance[len(bytes)-i-1] = b
 		}
 	}
-	values[utils.BalanceLeafKey] = balance[:]
+	values[utils.BalanceLeafKey] = balance[:] // balance 기록
 
+	// values는 byte[][] 이고, Nonce, Balance, CodeHash순으로 저장됩니다.
+	// 0: version byte[]
+	// 1: nonce byte[]
+	// 2: balance byte[]
+	// 3: codehash byte[]
 	switch n := t.root.(type) {
 	case *verkle.InternalNode:
+		// address에 대한 stem을 가져와 values와 함께 추가합니다.
 		err = n.InsertValuesAtStem(t.cache.GetStem(addr[:]), values, t.nodeResolver)
 		if err != nil {
 			return fmt.Errorf("UpdateAccount (%x) error: %v", addr, err)
@@ -166,6 +181,7 @@ func (t *VerkleTrie) UpdateAccount(addr common.Address, acc *types.StateAccount)
 
 // UpdateStorage implements state.Trie, writing the provided storage slot into
 // the tree. If the tree is corrupted, an error will be returned.
+// address에 대한 storage value를 추가합니다.
 func (t *VerkleTrie) UpdateStorage(address common.Address, key, value []byte) error {
 	// Left padding the slot value to 32 bytes.
 	var v [32]byte

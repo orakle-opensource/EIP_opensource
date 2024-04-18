@@ -433,10 +433,13 @@ func GenerateVerkleChain(config *params.ChainConfig, parent *types.Block, engine
 		b := &BlockGen{i: i, cm: cm, parent: parent, statedb: statedb, engine: engine}
 		b.header = cm.makeHeader(parent, statedb, b.engine)
 
+		// proof이 생성 작업이 완료되면, 주석을 제거합니다.
+		// block에 이전 state를 삽입하여, block 데이터 만으로 검증가능하도록 합니다.
 		// TODO uncomment when proof generation is merged
 		// Save pre state for proof generation
 		// preState := statedb.Copy()
 
+		// ??
 		// TODO uncomment when the 2935 PR is merged
 		// if config.IsPrague(b.header.Number, b.header.Time) {
 		// if !config.IsPrague(b.parent.Number(), b.parent.Time()) {
@@ -469,6 +472,7 @@ func GenerateVerkleChain(config *params.ChainConfig, parent *types.Block, engine
 			panic(fmt.Sprintf("trie write error: %v", err))
 		}
 
+		// proof와 변경된 key, value 값(witness)을 넣어 검증에 사용하도록 합니다.
 		// TODO uncomment when proof generation is merged
 		// proofs = append(proofs, block.ExecutionWitness().VerkleProof)
 		// keyvals = append(keyvals, block.ExecutionWitness().StateDiff)
