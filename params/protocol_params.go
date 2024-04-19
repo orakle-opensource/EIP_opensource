@@ -165,6 +165,7 @@ const (
 
 	// The Refund Quotient is the cap on how much of the used gas can be refunded. 
  //  Before EIP-3529, up to half the consumed gas could be refunded. Redefined as 1/5th in EIP-3529
+  // EIP-3529 에 의해, 트랜잭션 수행 후 환불되는 최대 가스량의 양이 감소하게 되었습니다.
 	RefundQuotient        uint64 = 2
 	RefundQuotientEIP3529 uint64 = 5
 
