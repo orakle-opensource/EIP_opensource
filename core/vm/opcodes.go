@@ -100,6 +100,7 @@ const (
 	CHAINID     OpCode = 0x46
 	SELFBALANCE OpCode = 0x47
 	BASEFEE     OpCode = 0x48
+	// eip-4844 opcode
 	BLOBHASH    OpCode = 0x49
 	BLOBBASEFEE OpCode = 0x4a
 )
