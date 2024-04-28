@@ -261,6 +261,7 @@ func ExecutableDataToBlock(params ExecutableData, versionedHashes []common.Hash,
 	return block, nil
 }
 
+// 블록을 ExecutableData 형태로 변환
 // BlockToExecutableData constructs the ExecutableData structure by filling the
 // fields from the given block. It assumes the given block is post-merge block.
 func BlockToExecutableData(block *types.Block, fees *big.Int, sidecars []*types.BlobTxSidecar) *ExecutionPayloadEnvelope {
@@ -288,6 +289,7 @@ func BlockToExecutableData(block *types.Block, fees *big.Int, sidecars []*types.
 		Blobs:       make([]hexutil.Bytes, 0),
 		Proofs:      make([]hexutil.Bytes, 0),
 	}
+	// sidecar의 blobs, commmitments, proofs를 bundle
 	for _, sidecar := range sidecars {
 		for j := range sidecar.Blobs {
 			bundle.Blobs = append(bundle.Blobs, hexutil.Bytes(sidecar.Blobs[j][:]))

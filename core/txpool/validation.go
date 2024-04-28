@@ -114,6 +114,7 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 	if tx.GasTipCapIntCmp(opts.MinTip) < 0 {
 		return fmt.Errorf("%w: gas tip cap %v, minimum needed %v", ErrUnderpriced, tx.GasTipCap(), opts.MinTip)
 	}
+	// tx의 type이 블롭 트랜잭션이면 관련 정보를 검증한다.
 	if tx.Type() == types.BlobTxType {
 		// Ensure the blob fee cap satisfies the minimum blob gas price
 		if tx.BlobGasFeeCapIntCmp(blobTxMinBlobGasPrice) < 0 {
@@ -123,6 +124,7 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 		if sidecar == nil {
 			return errors.New("missing sidecar in blob transaction")
 		}
+		// 블롭 트랜잭션 내부 원소들의 수를 검증한다.
 		// Ensure the number of items in the blob transaction and various side
 		// data match up before doing any expensive validations
 		hashes := tx.BlobHashes()
@@ -132,6 +134,7 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 		if len(hashes) > params.MaxBlobGasPerBlock/params.BlobTxBlobGasPerBlob {
 			return fmt.Errorf("too many blobs in transaction: have %d, permitted %d", len(hashes), params.MaxBlobGasPerBlock/params.BlobTxBlobGasPerBlob)
 		}
+		// commitments, proofs, hashes가 유효한지 검증한다.
 		// Ensure commitments, proofs and hashes are valid
 		if err := validateBlobSidecar(hashes, sidecar); err != nil {
 			return err
@@ -140,6 +143,7 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 	return nil
 }
 
+// validateBlobSidecar는 블롭 사이드카와 hashes를 검증한다.
 func validateBlobSidecar(hashes []common.Hash, sidecar *types.BlobTxSidecar) error {
 	if len(sidecar.Blobs) != len(hashes) {
 		return fmt.Errorf("invalid number of %d blobs compared to %d blob hashes", len(sidecar.Blobs), len(hashes))
@@ -150,6 +154,7 @@ func validateBlobSidecar(hashes []common.Hash, sidecar *types.BlobTxSidecar) err
 	if len(sidecar.Proofs) != len(hashes) {
 		return fmt.Errorf("invalid number of %d blob proofs compared to %d blob hashes", len(sidecar.Proofs), len(hashes))
 	}
+	// 블롭 수가 맞으면, 해시와 커밋먼트가 일치하는지 검증한다.
 	// Blob quantities match up, validate that the provers match with the
 	// transaction hash before getting to the cryptography
 	hasher := sha256.New()
@@ -159,6 +164,7 @@ func validateBlobSidecar(hashes []common.Hash, sidecar *types.BlobTxSidecar) err
 			return fmt.Errorf("blob %d: computed hash %#x mismatches transaction one %#x", i, computed, vhash)
 		}
 	}
+	// 블롭 커밋먼트와 해시가 일치하면, KZG를 사용해서 블롭을 검증한다.
 	// Blob commitments match with the hashes in the transaction, verify the
 	// blobs themselves via KZG
 	for i := range sidecar.Blobs {

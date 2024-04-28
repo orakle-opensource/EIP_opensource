@@ -60,6 +60,7 @@ func BytesSize(b []byte) uint64 {
 	}
 }
 
+// ListSize는 RLP list의 encoded size를 반환한다.
 // ListSize returns the encoded size of an RLP list with the given
 // content size.
 func ListSize(contentSize uint64) uint64 {

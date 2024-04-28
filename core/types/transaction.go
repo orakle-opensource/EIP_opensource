@@ -311,6 +311,7 @@ func (tx *Transaction) To() *common.Address {
 	return copyAddressPtr(tx.inner.to())
 }
 
+// Cost는 gas * gasPrice + blobGas * blobGasPrice + value 를 반환한다.
 // Cost returns (gas * gasPrice) + (blobGas * blobGasPrice) + value.
 func (tx *Transaction) Cost() *big.Int {
 	total := new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(tx.Gas()))
@@ -386,6 +387,7 @@ func (tx *Transaction) EffectiveGasTipIntCmp(other *big.Int, baseFee *big.Int) i
 	return tx.EffectiveGasTipValue(baseFee).Cmp(other)
 }
 
+// BlobGas는 blob gas limit을 반환한다.
 // BlobGas returns the blob gas limit of the transaction for blob transactions, 0 otherwise.
 func (tx *Transaction) BlobGas() uint64 {
 	if blobtx, ok := tx.inner.(*BlobTx); ok {
@@ -394,6 +396,7 @@ func (tx *Transaction) BlobGas() uint64 {
 	return 0
 }
 
+// BlobGasFeeCap는 blob gas fee cap를 반환한다.
 // BlobGasFeeCap returns the blob gas fee cap per blob gas of the transaction for blob transactions, nil otherwise.
 func (tx *Transaction) BlobGasFeeCap() *big.Int {
 	if blobtx, ok := tx.inner.(*BlobTx); ok {
@@ -402,6 +405,7 @@ func (tx *Transaction) BlobGasFeeCap() *big.Int {
 	return nil
 }
 
+// BlobHashes는 blob transactions의 blob commitments의 hashes를 반환한다.
 // BlobHashes returns the hashes of the blob commitments for blob transactions, nil otherwise.
 func (tx *Transaction) BlobHashes() []common.Hash {
 	if blobtx, ok := tx.inner.(*BlobTx); ok {
@@ -410,6 +414,7 @@ func (tx *Transaction) BlobHashes() []common.Hash {
 	return nil
 }
 
+// BlobTxSidecar는 블롭트랜잭션의 sidecar를 반환한다.
 // BlobTxSidecar returns the sidecar of a blob transaction, nil otherwise.
 func (tx *Transaction) BlobTxSidecar() *BlobTxSidecar {
 	if blobtx, ok := tx.inner.(*BlobTx); ok {
