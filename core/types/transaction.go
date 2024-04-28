@@ -322,6 +322,8 @@ func (tx *Transaction) Cost() *big.Int {
 	return total
 }
 
+// RawSignatureValues는 트랜잭션의 V, R, S 서명값을 반환
+// 반환값은 caller에 의해 수정되지 않아야하고, 서명되지 않은 경우 nil or zero 가 될 수 있다.
 // RawSignatureValues returns the V, R, S signature values of the transaction.
 // The return values should not be modified by the caller.
 // The return values may be nil or zero, if the transaction is unsigned.

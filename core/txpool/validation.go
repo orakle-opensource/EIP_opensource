@@ -47,22 +47,29 @@ type ValidationOptions struct {
 	MinTip  *big.Int // Minimum gas tip needed to allow a transaction into the caller pool
 }
 
+// ValidateTransaction은 트랜잭션이 유효한지 확인하는 메서드이다.
+// 컨센서스 규칙에 따라 유효한 트랜잭션을 확인하지만, state-dependent validation(balance, nonce, etc)는 확인하지 않는다.
 // ValidateTransaction is a helper method to check whether a transaction is valid
 // according to the consensus rules, but does not check state-dependent validation
 // (balance, nonce, etc).
 //
+// 트랜잭션 풀에서 사용되는 공통적인 검사 로직을 공유함으로써
+// 코드 중복을 피하고 업데이트의 일관성을 유지할 수 있다
 // This check is public to allow different transaction pools to check the basic
 // rules without duplicating code and running the risk of missed updates.
 func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types.Signer, opts *ValidationOptions) error {
+	// 트랜잭션이 calling poool에서 구현되지 않은 트랜잭션은 거부된다
 	// Ensure transactions not implemented by the calling pool are rejected
 	if opts.Accept&(1<<tx.Type()) == 0 {
 		return fmt.Errorf("%w: tx type %v not supported by this pool", core.ErrTxTypeNotSupported, tx.Type())
 	}
+	// 고비용의 검증을 수행하기 전에, tx가 pool이 관리 가능한 최대 수보다 적은지 확인한다.
 	// Before performing any expensive validations, sanity check that the tx is
 	// smaller than the maximum limit the pool can meaningfully handle
 	if tx.Size() > opts.MaxSize {
 		return fmt.Errorf("%w: transaction size %v, limit %v", ErrOversizedData, tx.Size(), opts.MaxSize)
 	}
+	// 받아들여질 수 있는 타입의 트랜잭션만 받아들인다.
 	// Ensure only transactions that have been enabled are accepted
 	if !opts.Config.IsBerlin(head.Number) && tx.Type() != types.LegacyTxType {
 		return fmt.Errorf("%w: type %d rejected, pool not yet in Berlin", core.ErrTxTypeNotSupported, tx.Type())
@@ -73,10 +80,15 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 	if !opts.Config.IsCancun(head.Number, head.Time) && tx.Type() == types.BlobTxType {
 		return fmt.Errorf("%w: type %d rejected, pool not yet in Cancun", core.ErrTxTypeNotSupported, tx.Type())
 	}
+	// init code 크기가 초과되었는지 확인한다.
 	// Check whether the init code size has been exceeded
 	if opts.Config.IsShanghai(head.Number, head.Time) && tx.To() == nil && len(tx.Data()) > params.MaxInitCodeSize {
 		return fmt.Errorf("%w: code size %v, limit %v", core.ErrMaxInitCodeSizeExceeded, len(tx.Data()), params.MaxInitCodeSize)
 	}
+
+	// 유효한 트랜잭션 값은 negative값을 가질 수 없다.
+	// RLP 디코딩된 트랜잭션값은 negative가 될 수 없지만,
+	// RPC를 사용하여 생성된 트랜잭션값은 음수 값이 발생할 수 있다.
 	// Transactions can't be negative. This may never happen using RLP decoded
 	// transactions but may occur for transactions created using the RPC.
 	if tx.Value().Sign() < 0 {
@@ -97,10 +109,12 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 	if tx.GasFeeCapIntCmp(tx.GasTipCap()) < 0 {
 		return core.ErrTipAboveFeeCap
 	}
+	// 트랜잭션이 적절히 서명되었음을 확인한다.
 	// Make sure the transaction is signed properly
 	if _, err := types.Sender(signer, tx); err != nil {
 		return ErrInvalidSender
 	}
+	// 트랜잭션이 intrinsic gas보다 많은 gas를 가지고 있는지 확인
 	// Ensure the transaction has more gas than the bare minimum needed to cover
 	// the transaction metadata
 	intrGas, err := core.IntrinsicGas(tx.Data(), tx.AccessList(), tx.To() == nil, true, opts.Config.IsIstanbul(head.Number), opts.Config.IsShanghai(head.Number, head.Time))
@@ -110,11 +124,12 @@ func ValidateTransaction(tx *types.Transaction, head *types.Header, signer types
 	if tx.Gas() < intrGas {
 		return fmt.Errorf("%w: gas %v, minimum needed %v", core.ErrIntrinsicGas, tx.Gas(), intrGas)
 	}
+	// gasprice가 calling pool의 요구사항에 충족하는지 확인
 	// Ensure the gasprice is high enough to cover the requirement of the calling pool
 	if tx.GasTipCapIntCmp(opts.MinTip) < 0 {
 		return fmt.Errorf("%w: gas tip cap %v, minimum needed %v", ErrUnderpriced, tx.GasTipCap(), opts.MinTip)
 	}
-	// tx의 type이 블롭 트랜잭션이면 관련 정보를 검증한다.
+	// tx의 type이 블롭 트랜잭션이면 블롭 관련 정보를 검증한다.
 	if tx.Type() == types.BlobTxType {
 		// Ensure the blob fee cap satisfies the minimum blob gas price
 		if tx.BlobGasFeeCapIntCmp(blobTxMinBlobGasPrice) < 0 {

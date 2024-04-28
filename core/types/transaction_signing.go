@@ -171,6 +171,7 @@ type Signer interface {
 
 type cancunSigner struct{ londonSigner }
 
+// NewCancunSigner는 accpets한 signer를 반환한다.
 // NewCancunSigner returns a signer that accepts
 // - EIP-4844 blob transactions
 // - EIP-1559 dynamic fee transactions
@@ -181,11 +182,15 @@ func NewCancunSigner(chainId *big.Int) Signer {
 	return cancunSigner{londonSigner{eip2930Signer{NewEIP155Signer(chainId)}}}
 }
 
+// Sender는 cancunSigner의 메서드, 주어진 트랜잭션에서 발신자의 주소를 복구하는 역할
+// 블롭 트랜잭션은 특별한 서명 체계를 사용하므로, 일반 트랜잭션과 다른 방식으로 발신자 주소를 복구함
 func (s cancunSigner) Sender(tx *Transaction) (common.Address, error) {
 	if tx.Type() != BlobTxType {
 		return s.londonSigner.Sender(tx)
 	}
 	V, R, S := tx.RawSignatureValues()
+	// 블롭 트랜잭션은 0과 1을 복구 ID로 사용
+	// V에 27을 더해서 Unprotected Homestead 서명과 동일하게 만듬
 	// Blob txs are defined to use 0 and 1 as their recovery
 	// id, add 27 to become equivalent to unprotected Homestead signatures.
 	V = new(big.Int).Add(V, big.NewInt(27))
@@ -215,6 +220,8 @@ func (s cancunSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big
 	return R, S, V, nil
 }
 
+// Hash는 send에 의해 서명된 해시를 반환한다.
+// 해시는 트랜잭션을 unique하게 식별하지 않음.
 // Hash returns the hash to be signed by the sender.
 // It does not uniquely identify the transaction.
 func (s cancunSigner) Hash(tx *Transaction) common.Hash {
