@@ -22,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/protocols/eth"
 )
 
+// syncTransactions는 주어진 peer에 현재 pending transactions을 전송
 // syncTransactions starts sending all currently pending transactions to the given peer.
 func (h *handler) syncTransactions(p *eth.Peer) {
 	var hashes []common.Hash

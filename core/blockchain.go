@@ -1912,6 +1912,7 @@ type blockProcessingResult struct {
 	status   WriteStatus
 }
 
+// processBlock은 새로운 블록을 처리하고 유효성을 검사하는 역할을 합니다.
 // processBlock executes and validates the given block. If there was no error
 // it writes the block and associated state to database.
 func (bc *BlockChain) processBlock(block *types.Block, statedb *state.StateDB, start time.Time, setHead bool) (_ *blockProcessingResult, blockEndErr error) {

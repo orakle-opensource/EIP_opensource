@@ -26,6 +26,8 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+// beaconBlockSync는 request.Module를 구현합니다.
+// 이는 검증된 헤드와 prefetch head에 속하는 비콘 블록을 가져옵니다.
 // beaconBlockSync implements request.Module; it fetches the beacon blocks belonging
 // to the validated and prefetch heads.
 type beaconBlockSync struct {
@@ -44,6 +46,7 @@ type headTracker interface {
 	ValidatedFinality() (types.FinalityUpdate, bool)
 }
 
+// newBeaconBlockSync는 beaconBlockSync를 반환한다.
 // newBeaconBlockSync returns a new beaconBlockSync.
 func newBeaconBlockSync(headTracker headTracker) *beaconBlockSync {
 	return &beaconBlockSync{
@@ -58,6 +61,8 @@ func (s *beaconBlockSync) SubscribeChainHead(ch chan<- types.ChainHeadEvent) eve
 	return s.chainHeadFeed.Subscribe(ch)
 }
 
+// request.Module를 구현
+// beaconBlock의 process과정에서 발생하는 이벤트를 처리하고 필요한 블록을 요청하는 역할 수행
 // Process implements request.Module.
 func (s *beaconBlockSync) Process(requester request.Requester, events []request.Event) {
 	for _, event := range events {
