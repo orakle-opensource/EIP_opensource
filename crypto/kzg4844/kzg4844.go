@@ -49,6 +49,7 @@ func (b Blob) MarshalText() ([]byte, error) {
 	return hexutil.Bytes(b[:]).MarshalText()
 }
 
+// Commitment는 다항식에 대한 serialized된 commitment
 // Commitment is a serialized commitment to a polynomial.
 type Commitment [48]byte
 
@@ -141,6 +142,7 @@ func ComputeBlobProof(blob *Blob, commitment Commitment) (Proof, error) {
 	return gokzgComputeBlobProof(blob, commitment)
 }
 
+// VerifyBlobProof는 blob data가 제공된 commitment와 연관되어 있는지 검증한다.
 // VerifyBlobProof verifies that the blob data corresponds to the provided commitment.
 func VerifyBlobProof(blob *Blob, commitment Commitment, proof Proof) error {
 	if useCKZG.Load() {
@@ -149,6 +151,8 @@ func VerifyBlobProof(blob *Blob, commitment Commitment, proof Proof) error {
 	return gokzgVerifyBlobProof(blob, commitment, proof)
 }
 
+// CalcBlobHashV1은 commitment의 versioned blob hash를 계산
+// 주어진 hasher는 반드시 sha256 hash instrance이다.(Hash 인터페이스는 instance로 사용됨)
 // CalcBlobHashV1 calculates the 'versioned blob hash' of a commitment.
 // The given hasher must be a sha256 hash instance, otherwise the result will be invalid!
 func CalcBlobHashV1(hasher hash.Hash, commit *Commitment) (vh [32]byte) {
@@ -157,6 +161,7 @@ func CalcBlobHashV1(hasher hash.Hash, commit *Commitment) (vh [32]byte) {
 	}
 	hasher.Reset()
 	hasher.Write(commit[:])
+
 	hasher.Sum(vh[:0])
 	vh[0] = 0x01 // version
 	return vh
