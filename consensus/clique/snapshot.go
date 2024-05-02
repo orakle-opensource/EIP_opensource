@@ -140,6 +140,7 @@ func (s *Snapshot) validVote(address common.Address, authorize bool) bool {
 }
 
 // cast adds a new vote into the tally.
+// 새로운 투표 추가
 func (s *Snapshot) cast(address common.Address, authorize bool) bool {
 	// Ensure the vote is meaningful
 	if !s.validVote(address, authorize) {
@@ -156,6 +157,7 @@ func (s *Snapshot) cast(address common.Address, authorize bool) bool {
 }
 
 // uncast removes a previously cast vote from the tally.
+// 투표 제거
 func (s *Snapshot) uncast(address common.Address, authorize bool) bool {
 	// If there's no tally, it's a dangling vote, just drop
 	tally, ok := s.Tally[address]
@@ -178,6 +180,7 @@ func (s *Snapshot) uncast(address common.Address, authorize bool) bool {
 
 // apply creates a new authorization snapshot by applying the given headers to
 // the original one.
+// 투표 업데이트 
 func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	// Allow passing in no headers for cleaner code
 	if len(headers) == 0 {
@@ -201,16 +204,19 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	)
 	for i, header := range headers {
 		// Remove any votes on checkpoint blocks
+		// 체크포인트 블록 처리: 에포크 구간의 시작점에서는 모든 투표를 초기화합니다.
 		number := header.Number.Uint64()
 		if number%s.config.Epoch == 0 {
 			snap.Votes = nil
 			snap.Tally = make(map[common.Address]Tally)
 		}
 		// Delete the oldest signer from the recent list to allow it signing again
+		//최근 서명자 제거: 허용된 서명자 목록에서 오래된 서명자를 제거하여 다시 서명할 수 있도록 합니다.
 		if limit := uint64(len(snap.Signers)/2 + 1); number >= limit {
 			delete(snap.Recents, number-limit)
 		}
 		// Resolve the authorization key and check against signers
+		// 서명자 권한 검증: ecrecover 함수를 사용하여 헤더에 서명한 주소를 확인하고, 해당 서명자가 스냅샷의 서명자 목록에 포함되어 있는지 검사합니다.
 		signer, err := ecrecover(header, s.sigcache)
 		if err != nil {
 			return nil, err
@@ -226,6 +232,7 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 		snap.Recents[number] = signer
 
 		// Header authorized, discard any previous votes from the signer
+		// 새 투표 처리: 헤더의 Nonce 값을 검사하여 서명자의 투표 의도(권한 부여 또는 박탈)를 확인하고, 이를 스냅샷에 반영합니다.
 		for i, vote := range snap.Votes {
 			if vote.Signer == signer && vote.Address == header.Coinbase {
 				// Uncast the vote from the cached tally
@@ -255,6 +262,7 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 			})
 		}
 		// If the vote passed, update the list of signers
+		// 서명자 목록 업데이트: 투표 결과를 기반으로 서명자 목록을 업데이트합니다. 필요한 투표 수를 초과한 경우, 서명자의 권한을 부여하거나 박탈합니다.
 		if tally := snap.Tally[header.Coinbase]; tally.Votes > len(snap.Signers)/2 {
 			if tally.Authorize {
 				snap.Signers[header.Coinbase] = struct{}{}
@@ -296,6 +304,7 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	if time.Since(start) > 8*time.Second {
 		log.Info("Reconstructed voting history", "processed", len(headers), "elapsed", common.PrettyDuration(time.Since(start)))
 	}
+	// 최종 업데이트
 	snap.Number += uint64(len(headers))
 	snap.Hash = headers[len(headers)-1].Hash()
 

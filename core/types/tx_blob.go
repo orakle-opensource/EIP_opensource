@@ -28,6 +28,7 @@ import (
 	"github.com/holiman/uint256"
 )
 
+// BlobTx는 EIP-4844 트랜잭션을 나타냄
 // BlobTx represents an EIP-4844 transaction.
 type BlobTx struct {
 	ChainID    *uint256.Int
@@ -42,6 +43,7 @@ type BlobTx struct {
 	BlobFeeCap *uint256.Int // a.k.a. maxFeePerBlobGas
 	BlobHashes []common.Hash
 
+	// 블롭 트랜잭션은 블롭을 선택적으로 포함한다. BlobTx가 서명 트랜잭션으로 생성되었을 경우 이 반드시 블롭 필드를 포함한다.
 	// A blob transaction can optionally contain blobs. This field must be set when BlobTx
 	// is used to create a transaction for signing.
 	Sidecar *BlobTxSidecar `rlp:"-"`
@@ -52,6 +54,7 @@ type BlobTx struct {
 	S *uint256.Int `json:"s" gencodec:"required"`
 }
 
+// BlobTxSidecar는 블롭 트랜잭션의 blob, commitment, proof을 포함하고 있음.
 // BlobTxSidecar contains the blobs of a blob transaction.
 type BlobTxSidecar struct {
 	Blobs       []kzg4844.Blob       // Blobs needed by the blob pool
@@ -59,6 +62,7 @@ type BlobTxSidecar struct {
 	Proofs      []kzg4844.Proof      // Proofs needed by the blob pool
 }
 
+// BlobHashes는 주어진 블롭의 블롭 해시를 계산한다.
 // BlobHashes computes the blob hashes of the given blobs.
 func (sc *BlobTxSidecar) BlobHashes() []common.Hash {
 	hasher := sha256.New()
@@ -69,6 +73,8 @@ func (sc *BlobTxSidecar) BlobHashes() []common.Hash {
 	return h
 }
 
+// encodedSize는 사이드카 원소의 RLP크기를 계산한다.
+// 이것은 BlobTxSidecar의 encoded된 크기를 반환하지 않으며, tx.Size() 메소드를 도와준다.
 // encodedSize computes the RLP size of the sidecar elements. This does NOT return the
 // encoded size of the BlobTxSidecar, it's just a helper for tx.Size().
 func (sc *BlobTxSidecar) encodedSize() uint64 {
@@ -85,6 +91,7 @@ func (sc *BlobTxSidecar) encodedSize() uint64 {
 	return rlp.ListSize(blobs) + rlp.ListSize(commitments) + rlp.ListSize(proofs)
 }
 
+// BlobTxWithBlobs는 블롭이 존재할떄 trnasaction을 encoding하는데 사용된다.
 // blobTxWithBlobs is used for encoding of transactions when blobs are present.
 type blobTxWithBlobs struct {
 	BlobTx      *BlobTx
@@ -191,6 +198,7 @@ func (tx *BlobTx) withoutSidecar() *BlobTx {
 	return &cpy
 }
 
+// BlobTx를 rlp encode
 func (tx *BlobTx) encode(b *bytes.Buffer) error {
 	if tx.Sidecar == nil {
 		return rlp.Encode(b, tx)
@@ -204,7 +212,11 @@ func (tx *BlobTx) encode(b *bytes.Buffer) error {
 	return rlp.Encode(b, inner)
 }
 
+// BlobTx를 rlp decode
 func (tx *BlobTx) decode(input []byte) error {
+	// Tx에 블롭이 있는 경우와 없는 경우로 분류
+	// input list의 첫번째 원소가 list자기 자신인지에 따라 구분
+
 	// Here we need to support two formats: the network protocol encoding of the tx (with
 	// blobs) or the canonical encoding without blobs.
 	//
@@ -219,10 +231,12 @@ func (tx *BlobTx) decode(input []byte) error {
 	if err != nil {
 		return err
 	}
-
+	// 첫번째 원소가 rlp.list가 아니면 블롭 없는 정식 인코딩 방식
 	if firstElemKind != rlp.List {
 		return rlp.DecodeBytes(input, tx)
 	}
+
+	// 반대의 경우 blob 있는 Tx
 	// It's a tx with blobs.
 	var inner blobTxWithBlobs
 	if err := rlp.DecodeBytes(input, &inner); err != nil {

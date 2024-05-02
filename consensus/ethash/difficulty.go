@@ -128,6 +128,7 @@ func CalcDifficultyHomesteadU256(time uint64, parent *types.Header) *big.Int {
 	return pDiff.ToBig()
 }
 
+//EIP-100 적용 사항
 // MakeDifficultyCalculatorU256 creates a difficultyCalculator with the given bomb-delay.
 // the difficulty is calculated with Byzantium rules, which differs from Homestead in
 // how uncles affect the calculation
@@ -144,9 +145,10 @@ func MakeDifficultyCalculatorU256(bombDelay *big.Int) func(time uint64, parent *
 			b = min(parent.difficulty, MIN_DIFF)
 			child_diff = max(a,b )
 		*/
+		//EIP-100: 분모가 9로 변경됨
 		x := (time - parent.Time) / 9 // (block_timestamp - parent_timestamp) // 9
 		c := uint64(1)                // if parent.unclehash == emptyUncleHashHash
-		if parent.UncleHash != types.EmptyUncleHash {
+		if parent.UncleHash != types.EmptyUncleHash { //EIP-100: 엉클 블록
 			c = 2
 		}
 		xNeg := x >= c

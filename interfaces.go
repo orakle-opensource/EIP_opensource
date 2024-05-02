@@ -140,6 +140,7 @@ type ChainSyncReader interface {
 	SyncProgress(ctx context.Context) (*SyncProgress, error)
 }
 
+// CallMsg는 contract call을 위한 parameters
 // CallMsg contains parameters for contract calls.
 type CallMsg struct {
 	From      common.Address  // the sender of the 'transaction'
@@ -154,6 +155,7 @@ type CallMsg struct {
 	AccessList types.AccessList // EIP-2930 access list.
 
 	// For BlobTxType
+	// blob Tx의 contract call param
 	BlobGasFeeCap *big.Int
 	BlobHashes    []common.Hash
 }
