@@ -90,6 +90,7 @@ func (c *PointCache) Get(addr []byte) *verkle.Point {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	// address에 대한 Bandersnatch 타원곡선 좌표를 가져옵니다.
 	p, ok := c.lru.Get(string(addr))
 	if ok {
 		cacheHitGauge.Inc(1)
@@ -104,8 +105,8 @@ func (c *PointCache) Get(addr []byte) *verkle.Point {
 // GetStem returns the first 31 bytes of the tree key as the tree stem. It only
 // works for the account metadata whose treeIndex is 0.
 func (c *PointCache) GetStem(addr []byte) []byte {
-	p := c.Get(addr)
-	return pointToHash(p, 0)[:31]
+	p := c.Get(addr)              // address에 대한 point(좌표)를 가져옵니다.
+	return pointToHash(p, 0)[:31] // 좌표에 대한 stem을 가져옵니다.
 }
 
 // GetTreeKey performs both the work of the spec's get_tree_key function, and that
@@ -305,6 +306,7 @@ func StorageSlotKeyWithEvaluatedAddress(evaluated *verkle.Point, storageKey []by
 	return GetTreeKeyWithEvaluatedAddress(evaluated, treeIndex, subIndex)
 }
 
+// 253bit field 제한으로 인해, MSB를 분할하는 로직을 포함합니다.
 func pointToHash(evaluated *verkle.Point, suffix byte) []byte {
 	// The output of Byte() is big endian for banderwagon. This
 	// introduces an imbalance in the tree, because hashes are
