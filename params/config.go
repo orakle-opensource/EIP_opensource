@@ -599,6 +599,7 @@ func (c *ChainConfig) IsPrague(num *big.Int, time uint64) bool {
 }
 
 // IsVerkle returns whether num is either equal to the Verkle fork time or greater.
+// LondonFork 이후이며, VerkleTime 이후인경우, Verkle이 적용됩니다.: 현재 VerkleTime = nil
 func (c *ChainConfig) IsVerkle(num *big.Int, time uint64) bool {
 	return c.IsLondon(num) && isTimestampForked(c.VerkleTime, time)
 }

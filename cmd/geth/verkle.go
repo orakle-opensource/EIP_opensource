@@ -70,10 +70,17 @@ in which key1, key2, ... are expanded.
 // recurse into each child to ensure they can be loaded from the db. The tree isn't rebuilt
 // (only its nodes are loaded) so there is no need to flush them, the garbage collector should
 // take care of that for us.
+
+// 재귀적으로 순환하며, child node를 탐색합니다.
+// Internode일 경우, children node에 대해 checkChildren을 재귀호출합니다.
+// LeafNode일 경우, 저장된 value를 가져와 값을 확인합니다.
+// 값이 비어있는 경우, 더 이상 탐색하지 않습니다.
 func checkChildren(root verkle.VerkleNode, resolver verkle.NodeResolverFn) error {
 	switch node := root.(type) {
 	case *verkle.InternalNode:
+		// children node 순환 탐색
 		for i, child := range node.Children() {
+			// child node 데이터 불러오기
 			childC := child.Commit().Bytes()
 
 			childS, err := resolver(childC[:])
@@ -84,17 +91,18 @@ func checkChildren(root verkle.VerkleNode, resolver verkle.NodeResolverFn) error
 				return fmt.Errorf("could not find child %x in db: %w", childC, err)
 			}
 			// depth is set to 0, the tree isn't rebuilt so it's not a problem
-			childN, err := verkle.ParseNode(childS, 0)
+			childN, err := verkle.ParseNode(childS, 0) // verkle node 타입으로 전환
 			if err != nil {
 				return fmt.Errorf("decode error child %x in db: %w", child.Commitment().Bytes(), err)
 			}
+			// 재귀 호출하여 children 탐색
 			if err := checkChildren(childN, resolver); err != nil {
 				return fmt.Errorf("%x%w", i, err) // write the path to the erroring node
 			}
 		}
 	case *verkle.LeafNode:
 		// sanity check: ensure at least one value is non-zero
-
+		// 256개의 value 탐색
 		for i := 0; i < verkle.NodeWidth; i++ {
 			if len(node.Value(i)) != 0 {
 				return nil
@@ -145,11 +153,15 @@ func verifyVerkle(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// 불러온 BlockHeadRootHash 값을 통해 Verkle Node로 전환
 	root, err := verkle.ParseNode(serializedRoot, 0)
 	if err != nil {
 		return err
 	}
 
+	// children 탐색하여, rebuild 가능한지 검사
+	// 불가능한경우, MPT에서 데이터를 가져올 것 같음
 	if err := checkChildren(root, chaindb.Get); err != nil {
 		log.Error("Could not rebuild the tree from the database", "err", err)
 		return err
@@ -170,6 +182,8 @@ func expandVerkle(ctx *cli.Context) error {
 		keylist [][]byte
 		err     error
 	)
+
+	// args가 2개 이상인 경우, 실행
 	if ctx.NArg() >= 2 {
 		rootC, err = parseRoot(ctx.Args().First())
 		if err != nil {
@@ -195,16 +209,20 @@ func expandVerkle(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// verkle node로 전환
 	root, err := verkle.ParseNode(serializedRoot, 0)
 	if err != nil {
 		return err
 	}
 
+	// key에 대한 값 로깅
 	for i, key := range keylist {
 		log.Info("Reading key", "index", i, "key", keylist[0])
 		root.Get(key, chaindb.Get)
 	}
 
+	// 파일에 기록
 	if err := os.WriteFile("dump.dot", []byte(verkle.ToDot(root)), 0600); err != nil {
 		log.Error("Failed to dump file", "err", err)
 	} else {

@@ -120,6 +120,10 @@ const (
 	ExtcodeCopyBaseFrontier uint64 = 20
 	ExtcodeCopyBaseEIP150   uint64 = 700
 
+	// CreateBySelfdestructGas는 selfdestruct 연산에서 환불 계정이 존재하지 않을 때 사용되는 가스 비용을 나타낸다.
+	// selfdestruct는 컨트랙트를 소멸시키고, 해당 컨트랙트의 잔액을 지정된 계정으로 전송한다.
+	// 이때, 환불계정이 존재하지 않는 경우에는 계정 생성에 따른 추가적인 가스 비용이 발생함
+	// DoS공격 방지, 일관성유지
 	// CreateBySelfdestructGas is used when the refunded account is one that does
 	// not exist. This logic is similar to call.
 	// Introduced in Tangerine Whistle (Eip 150)

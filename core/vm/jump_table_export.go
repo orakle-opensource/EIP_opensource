@@ -26,7 +26,7 @@ import (
 // the rules.
 func LookupInstructionSet(rules params.Rules) (JumpTable, error) {
 	switch {
-	case rules.IsVerkle:
+	case rules.IsVerkle: // verkle trie는 아직 적용되지 않음을 보여줌
 		return newCancunInstructionSet(), errors.New("verkle-fork not defined yet")
 	case rules.IsPrague:
 		return newCancunInstructionSet(), errors.New("prague-fork not defined yet")

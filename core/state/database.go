@@ -179,7 +179,7 @@ type cachingDB struct {
 
 // OpenTrie opens the main account trie at a specific root hash.
 func (db *cachingDB) OpenTrie(root common.Hash) (Trie, error) {
-	if db.triedb.IsVerkle() {
+	if db.triedb.IsVerkle() { // verkle tree 적용된 경우, verkle trie 반환
 		return trie.NewVerkleTrie(root, db.triedb, utils.NewPointCache(commitmentCacheItems))
 	}
 	tr, err := trie.NewStateTrie(trie.StateTrieID(root), db.triedb)
@@ -195,6 +195,8 @@ func (db *cachingDB) OpenStorageTrie(stateRoot common.Hash, address common.Addre
 	// is hardcoded in the codebase. So we need to return the same trie in this
 	// case.
 	if db.triedb.IsVerkle() {
+		// verkle tree는 state & storage를 하나의 trie에서 관리하게 되므로, storage trie아닌
+		// 같은 trie 그대로 반환
 		return self, nil
 	}
 	tr, err := trie.NewStateTrie(trie.StorageTrieID(stateRoot, crypto.Keccak256Hash(address.Bytes()), root), db.triedb)
