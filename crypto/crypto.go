@@ -120,6 +120,7 @@ func CreateAddress(b common.Address, nonce uint64) common.Address {
 
 // CreateAddress2 creates an ethereum address given the address bytes, initial
 // contract code hash and a salt.
+// EIP-1014: Add CreateAddress2 for new creating contract address
 func CreateAddress2(b common.Address, salt [32]byte, inithash []byte) common.Address {
 	return common.BytesToAddress(Keccak256([]byte{0xff}, b.Bytes(), salt[:], inithash)[12:])
 }
