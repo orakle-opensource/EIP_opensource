@@ -279,6 +279,7 @@ func applyCancunChecks(env *stEnv, chainConfig *params.ChainConfig) error {
 	}
 	// Post-cancun
 	// We require EIP-4788 beacon root to be set in the env
+	// ParentBeaconBlockRoot가 pre state 환경변수에 설정되어 있는지 확인한다.
 	if env.ParentBeaconBlockRoot == nil {
 		return NewError(ErrorConfig, errors.New("post-cancun env requires parentBeaconBlockRoot to be set"))
 	}

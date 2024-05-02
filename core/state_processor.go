@@ -190,6 +190,8 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 func ProcessBeaconBlockRoot(beaconRoot common.Hash, vmenv *vm.EVM, statedb *state.StateDB) {
 	// If EIP-4788 is enabled, we need to invoke the beaconroot storage contract with
 	// the new root
+	// SmartContract에 BeaconBlockRoot를 저장
+	// Call Message 생성
 	msg := &Message{
 		From:      params.SystemAddress,
 		GasLimit:  30_000_000,
@@ -200,7 +202,9 @@ func ProcessBeaconBlockRoot(beaconRoot common.Hash, vmenv *vm.EVM, statedb *stat
 		Data:      beaconRoot[:],
 	}
 	vmenv.Reset(NewEVMTxContext(msg), statedb)
+	// addresslist에 BeaconRootsAddress(SmartContract) 추가
 	statedb.AddAddressToAccessList(params.BeaconRootsAddress)
+	// Smartcontract에 생성한 Message call 호출
 	_, _, _ = vmenv.Call(vm.AccountRef(msg.From), *msg.To, msg.Data, 30_000_000, common.U2560)
 	statedb.Finalise(true)
 }

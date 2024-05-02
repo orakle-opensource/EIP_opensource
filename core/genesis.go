@@ -464,6 +464,7 @@ func (g *Genesis) ToBlock() *types.Block {
 			// EIP-4788: The parentBeaconBlockRoot of the genesis block is always
 			// the zero hash. This is because the genesis block does not have a parent
 			// by definition.
+			// EIP-4788에 따라 ParentBeaconRoot를 초기화 함
 			head.ParentBeaconRoot = new(common.Hash)
 			// EIP-4844 fields
 			head.ExcessBlobGas = g.ExcessBlobGas

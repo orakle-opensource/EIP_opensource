@@ -201,7 +201,9 @@ var (
 	DurationLimit          = big.NewInt(13)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
 
 	// BeaconRootsAddress is the address where historical beacon roots are stored as per EIP-4788
+	// BeaconRoots를 저장할 SmartContract 주소
 	BeaconRootsAddress = common.HexToAddress("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02")
 	// SystemAddress is where the system-transaction is sent from as per EIP-4788
+	// ParentBeaconRoot를 SmartContract에 저장할 때 사용되는 from 주소
 	SystemAddress = common.HexToAddress("0xfffffffffffffffffffffffffffffffffffffffe")
 )

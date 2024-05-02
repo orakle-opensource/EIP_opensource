@@ -175,6 +175,7 @@ func (miner *Miner) prepareWork(genParams *generateParams) (*environment, error)
 		return nil, err
 	}
 	// Apply EIP-4844, EIP-4788.
+	// Cancun 업데이트 확인
 	if miner.chainConfig.IsCancun(header.Number, header.Time) {
 		var excessBlobGas uint64
 		if miner.chainConfig.IsCancun(parent.Number, parent.Time) {
@@ -185,6 +186,8 @@ func (miner *Miner) prepareWork(genParams *generateParams) (*environment, error)
 		}
 		header.BlobGasUsed = new(uint64)
 		header.ExcessBlobGas = &excessBlobGas
+		// Execution Layer Block header에 Beacon Chain Block Root 추가
+		// ParentBeaconRoot: mapping된 beacon chain block의 parent block's hash tree root
 		header.ParentBeaconRoot = genParams.beaconRoot
 	}
 	// Could potentially happen if starting to mine in an odd state.
@@ -195,9 +198,12 @@ func (miner *Miner) prepareWork(genParams *generateParams) (*environment, error)
 		log.Error("Failed to create sealing context", "err", err)
 		return nil, err
 	}
+	// ParentBeaconRoot를 가진 경우 아래 조건문 실행
 	if header.ParentBeaconRoot != nil {
 		context := core.NewEVMBlockContext(header, miner.chain, nil)
+		// EVM 생성
 		vmenv := vm.NewEVM(context, vm.TxContext{}, env.state, miner.chainConfig, vm.Config{})
+
 		core.ProcessBeaconBlockRoot(*header.ParentBeaconRoot, vmenv, env.state)
 	}
 	return env, nil
