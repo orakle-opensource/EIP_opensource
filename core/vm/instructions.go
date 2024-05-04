@@ -786,11 +786,18 @@ func opReturn(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	return ret, errStopToken
 }
 
+// REVERT instruction 을 수행하는 함수
 func opRevert(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
+	// EVM 의 stack 을 두 번 pop 하여 `offset`, `size` 값으로 사용합니다.
 	offset, size := scope.Stack.pop(), scope.Stack.pop()
+
+	// `offset`, `size` 를 이용하여 메모리 상의 특정 포인터를 가져옵니다.
 	ret := scope.Memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
 
+	// interpreter 에 마지막으로 호출한 함수의 반환값을 저장합니다.
 	interpreter.returnData = ret
+
+	// `ret`, 프로그램 수행이 REVERT 되었다는 에러 메세지를 반환합니다.
 	return ret, ErrExecutionReverted
 }
 
