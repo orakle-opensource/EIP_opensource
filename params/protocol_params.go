@@ -72,7 +72,8 @@ const (
 	// In EIP-2929: SstoreResetGas was changed to '5000 - COLD_SLOAD_COST'.
 	// In EIP-3529: SSTORE_CLEARS_SCHEDULE is defined as SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_KEY_COST
 	// Which becomes: 5000 - 2100 + 1900 = 4800
-	SstoreClearsScheduleRefundEIP3529 uint64 = SstoreResetGasEIP2200 - ColdSloadCostEIP2929 + TxAccessListStorageKeyGas
+  // EIP-3529 에 따라 SSTORE 를 비우는 데 드는 gas 비용이 4,800로 조정됩니다.
+	SstoreClearsScheduleRefundEIP3529 uint64 = (SstoreResetGasEIP2200 - ColdSloadCostEIP2929) + TxAccessListStorageKeyGas
 
 	JumpdestGas   uint64 = 1     // Once per JUMPDEST operation.
 	EpochDuration uint64 = 30000 // Duration between proof-of-work epochs.
@@ -166,8 +167,9 @@ const (
 	Bls12381MapG1Gas          uint64 = 5500   // Gas price for BLS12-381 mapping field element to G1 operation
 	Bls12381MapG2Gas          uint64 = 110000 // Gas price for BLS12-381 mapping field element to G2 operation
 
-	// The Refund Quotient is the cap on how much of the used gas can be refunded. Before EIP-3529,
-	// up to half the consumed gas could be refunded. Redefined as 1/5th in EIP-3529
+	// The Refund Quotient is the cap on how much of the used gas can be refunded. 
+ //  Before EIP-3529, up to half the consumed gas could be refunded. Redefined as 1/5th in EIP-3529
+  // EIP-3529 에 의해, 트랜잭션 수행 후 환불되는 최대 가스량의 양이 감소하게 되었습니다.
 	RefundQuotient        uint64 = 2
 	RefundQuotientEIP3529 uint64 = 5
 
