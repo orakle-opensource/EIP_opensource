@@ -181,6 +181,7 @@ func (p *Peer) sendPooledTransactionHashes(hashes []common.Hash, types []byte, s
 	return p2p.Send(p.rw, NewPooledTransactionHashesMsg, NewPooledTransactionHashesPacket{Types: types, Sizes: sizes, Hashes: hashes})
 }
 
+// AsyncSendPooledTransactionHashes는 트랜잭션 hash 리스트를 queue하고 이를 remote peer에게 전송한다.
 // AsyncSendPooledTransactionHashes queues a list of transactions hashes to eventually
 // announce to a remote peer.  The number of pending sends are capped (new ones
 // will force old sends to be dropped)

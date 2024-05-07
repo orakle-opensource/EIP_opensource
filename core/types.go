@@ -24,13 +24,17 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
+// Validator는 블록 검증에 대한 표준을 정의한 인터페이스이다. 이는 블록 body에 대해서만 검증하고,
+// block header는 각 consensus engines에 따라 다르게 검증된다.
 // Validator is an interface which defines the standard for block validation. It
 // is only responsible for validating block contents, as the header validation is
 // done by the specific consensus engines.
 type Validator interface {
+	// ValidateBody는 주어진 블록의 body를 검증한다.
 	// ValidateBody validates the given block's content.
 	ValidateBody(block *types.Block) error
 
+	// ValidateState는 주어진 statedb를 검증한다.
 	// ValidateState validates the given statedb and optionally the receipts and
 	// gas used.
 	ValidateState(block *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64) error
