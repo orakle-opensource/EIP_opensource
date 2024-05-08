@@ -441,8 +441,12 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 		evm.StateDB.AddAddressToAccessList(address)
 	}
 	// Ensure there's no existing contract already at the designated address
+	// 컨트랙트 주소로 부터 contractHash값을 가져옵니다.
 	contractHash := evm.StateDB.GetCodeHash(address)
+	// 컨트랙트 주소에 대한 nonce가 0인지 확인합니다.
+	// contractHash가 비어있는지 확인합니다.
 	if evm.StateDB.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != types.EmptyCodeHash) {
+		// nonce가 0이 아니거나, contractHash가 비어있지 않은 경우, 에러처리합니다.
 		if evm.Config.Tracer != nil && evm.Config.Tracer.OnGasChange != nil {
 			evm.Config.Tracer.OnGasChange(gas, 0, tracing.GasChangeCallFailedExecution)
 		}
@@ -452,7 +456,8 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	// Create a new account on the state
 	snapshot := evm.StateDB.Snapshot()
 	evm.StateDB.CreateAccount(address)
-	if evm.chainRules.IsEIP158 {
+	if evm.chainRules.IsEIP158 { // EIP158에 따른 컨트랙트 주소 존재 여부 규칙 적용
+		// 컨트랙트 주소에 nonce를 1로 설정합니다.
 		evm.StateDB.SetNonce(address, 1)
 	}
 	evm.Context.Transfer(evm.StateDB, caller.Address(), address, value)
@@ -502,6 +507,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 
 // Create creates a new contract using code as deployment code.
 func (evm *EVM) Create(caller ContractRef, code []byte, gas uint64, value *uint256.Int) (ret []byte, contractAddr common.Address, leftOverGas uint64, err error) {
+	// CREATE에 따른 컨트랙트 주소 계산
 	contractAddr = crypto.CreateAddress(caller.Address(), evm.StateDB.GetNonce(caller.Address()))
 	return evm.create(caller, &codeAndHash{code: code}, gas, value, contractAddr, CREATE)
 }
@@ -510,9 +516,12 @@ func (evm *EVM) Create(caller ContractRef, code []byte, gas uint64, value *uint2
 //
 // The different between Create2 with Create is Create2 uses keccak256(0xff ++ msg.sender ++ salt ++ keccak256(init_code))[12:]
 // instead of the usual sender-and-nonce-hash as the address where the contract is initialized at.
+// EIP-1014: Add new opcode Create2
 func (evm *EVM) Create2(caller ContractRef, code []byte, gas uint64, endowment *uint256.Int, salt *uint256.Int) (ret []byte, contractAddr common.Address, leftOverGas uint64, err error) {
 	codeAndHash := &codeAndHash{code: code}
+	// CREATE2에 따른 컨트랙트 주소 계산
 	contractAddr = crypto.CreateAddress2(caller.Address(), salt.Bytes32(), codeAndHash.Hash().Bytes())
+	// CREATE와 동일한 컨트랙트 생성 함수 호출
 	return evm.create(caller, codeAndHash, gas, endowment, contractAddr, CREATE2)
 }
 
