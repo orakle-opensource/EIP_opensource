@@ -119,6 +119,8 @@ func (v *BlockValidator) ValidateBody(block *types.Block) error {
 	return nil
 }
 
+// ValidateState는 state 전환 이후 발생한 변화
+// 사용된 가스, receipt roots, state root등을 검증한다.
 // ValidateState validates the various changes that happen after a state transition,
 // such as amount of used gas, the receipt roots and the state root itself.
 func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateDB, receipts types.Receipts, usedGas uint64) error {
